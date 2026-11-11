@@ -19,8 +19,6 @@ struct Panel: View {
                     Text(monitor.snapshot?.text("node_location") ?? "Bandwagon Host").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                SettingsLink { Image(systemName: "gearshape") }
-                    .buttonStyle(.plain).help("Settings").accessibilityLabel("Settings")
                 let state = monitor.snapshot?.state ?? (!monitor.configured && !monitor.initializing ? "Not connected" : (monitor.error == nil ? "Connecting" : "Unavailable"))
                 Label(state, systemImage: state == "Running" ? "checkmark.circle.fill" : "exclamationmark.circle")
                     .font(.caption).foregroundStyle(state == "Running" ? Color.green : Color.secondary)
@@ -39,6 +37,8 @@ struct Panel: View {
                 } else { Text("No metrics loaded").font(.caption).foregroundStyle(.secondary) }
                 Spacer()
                 if monitor.loading { ProgressView().controlSize(.small) }
+                SettingsLink { Image(systemName: "gearshape") }
+                    .help("Settings").accessibilityLabel("Settings")
                 Button { Task { await monitor.refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh now · auto refresh every 5 minutes").disabled(monitor.loading || !monitor.configured).accessibilityLabel("Refresh now")
                 Button("Quit") { NSApplication.shared.terminate(nil) }
             }.padding(12).help("Auto refresh every 5 minutes. API points: \(monitor.limits?["remaining_points_15min"]?.number.map { String(format: "%.0f", $0) } ?? "—") / 15 min; \(monitor.limits?["remaining_points_24h"]?.number.map { String(format: "%.0f", $0) } ?? "—") / 24 h")

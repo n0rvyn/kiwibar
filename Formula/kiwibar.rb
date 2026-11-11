@@ -1,9 +1,9 @@
 class Kiwibar < Formula
   desc "Native macOS menu bar monitor for Bandwagon Host"
   homepage "https://github.com/n0rvyn/kiwibar"
-  url "https://github.com/n0rvyn/kiwibar/releases/download/v1.1.0/KiwiBar-1.1.0-source.tar.gz"
-  sha256 "268fa5518440fea312d50ed93c1404986d52507f13ee97e8d012648e10cc4bdb"
-  version "1.1.0"
+  url "https://github.com/n0rvyn/kiwibar/releases/download/v1.1.1/KiwiBar-1.1.1-source.tar.gz"
+  sha256 "adf6bbbd30bbf2b043710228b0e083a8c86dc847745c16c9794d80f98c3ac36a"
+  version "1.1.1"
 
   depends_on xcode: ["26.0", :build]
   depends_on macos: :sonoma
@@ -24,6 +24,6 @@ class Kiwibar < Formula
 
   test do
     assert_match "KiwiBar", shell_output("#{bin}/kiwibar --help")
-    assert_equal "1.1.0", shell_output("#{bin}/kiwibar --version").strip
+    assert_equal "1.1.1", shell_output("#{bin}/kiwibar --version").strip
   end
 end

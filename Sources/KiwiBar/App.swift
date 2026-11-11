@@ -26,13 +26,14 @@ private struct StatusLabel: View {
     @Bindable var monitor: Monitor
     @Environment(\.openSettings) private var openSettings
     var body: some View {
-        Label {
-            Text(monitor.title)
-        } icon: {
+        HStack(spacing: 4) {
             Image(systemName: monitor.error == nil ? "server.rack" : "exclamationmark.triangle.fill")
                 .symbolRenderingMode(.palette)
                 .foregroundStyle(monitor.error != nil ? Color.orange : (monitor.snapshot?.state == "Running" ? .green : .secondary))
+            Text(monitor.title).monospacedDigit()
         }
+        .fixedSize()
+        .accessibilityLabel("KiwiBar \(monitor.title)")
         .task {
             let showSettings = CommandLine.arguments.contains("--settings")
             if showSettings {
@@ -64,7 +65,7 @@ private struct StatusLabel: View {
             guard monitor.configured else { print(monitor.error ?? "Open KiwiBar Settings to connect your host."); exit(1) }
             await monitor.refresh()
             guard let snapshot = monitor.snapshot else { print(monitor.error ?? "No metrics returned."); exit(1) }
-            print("Live API succeeded. State: \(snapshot.state). History samples: \(monitor.samples.count).")
+            print("Live API succeeded. State: \(snapshot.state). Transfer: \(snapshot.transferFraction.map { String(format: "%.0f%%", $0 * 100) } ?? "unavailable"). History samples: \(monitor.samples.count).")
             return
         }
         if let index = args.firstIndex(of: "--render"), args.indices.contains(index + 1) {
