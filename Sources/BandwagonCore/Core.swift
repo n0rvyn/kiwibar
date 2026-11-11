@@ -3,21 +3,12 @@ import Foundation
 public struct Credentials: Sendable {
     public let veid: String
     public let apiKey: String
-    public init(contents: String) throws {
-        var values: [String: String] = [:]
-        for raw in contents.components(separatedBy: .newlines) {
-            var line = raw.trimmingCharacters(in: .whitespaces)
-            if line.hasPrefix("export ") { line = String(line.dropFirst(7)) }
-            guard !line.hasPrefix("#"), let separator = line.firstIndex(of: "=") else { continue }
-            let key = line[..<separator].trimmingCharacters(in: .whitespaces)
-            var value = line[line.index(after: separator)...].trimmingCharacters(in: .whitespaces)
-            if value.count >= 2, let first = value.first, (first == "\"" || first == "'"), value.last == first {
-                value = String(value.dropFirst().dropLast())
-            } else if let comment = value.range(of: " #") { value = String(value[..<comment.lowerBound]).trimmingCharacters(in: .whitespaces) }
-            values[key] = value
-        }
-        guard let id = values["VEID"], !id.isEmpty, id.allSatisfy({ $0.isASCII && $0.isNumber }), let key = values["API_KEY"], !key.isEmpty else { throw MonitorError.credentials }
-        veid = id; apiKey = key
+    public init(veid: String, apiKey: String) throws {
+        let id = veid.trimmingCharacters(in: .whitespacesAndNewlines)
+        let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !id.isEmpty, id.allSatisfy({ $0.isASCII && $0.isNumber }), !key.isEmpty else { throw MonitorError.credentials }
+        self.veid = id
+        self.apiKey = key
     }
 }
 
@@ -25,7 +16,7 @@ public enum MonitorError: Error, LocalizedError {
     case credentials, http(Int), api(Int), response, redirected
     public var errorDescription: String? {
         switch self {
-        case .credentials: "Cannot read VEID and API_KEY from .env."
+        case .credentials: "Enter a numeric VEID and an API key in Settings."
         case .http(let code): "Bandwagon returned HTTP \(code)."
         case .api(let code): "Bandwagon API error \(code)."
         case .response: "Bandwagon returned an invalid response."

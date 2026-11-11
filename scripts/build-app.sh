@@ -7,11 +7,10 @@ swift build -c release --disable-sandbox --cache-path .build/cache --config-path
 APP="$PWD/dist/KiwiBar.app"
 mkdir -p "$APP/Contents/MacOS"
 cp .build/release/KiwiBar "$APP/Contents/MacOS/KiwiBar"
-python3 - "$APP" "$PWD/.env" "${1:-}" <<'PY'
+python3 - "$APP" "$(cat VERSION)" <<'PY'
 import plistlib,sys
 from pathlib import Path
-plist={'CFBundleExecutable':'KiwiBar','CFBundleIdentifier':'com.norvyn.KiwiBar','CFBundleName':'KiwiBar','CFBundlePackageType':'APPL','CFBundleShortVersionString':'1.0.0','CFBundleVersion':'1','LSMinimumSystemVersion':'14.0','LSUIElement':True,'NSHighResolutionCapable':True}
-if sys.argv[3] != '--distribution': plist['BandwagonEnvPath']=sys.argv[2]
+plist={'CFBundleExecutable':'KiwiBar','CFBundleIdentifier':'com.norvyn.KiwiBar','CFBundleName':'KiwiBar','CFBundlePackageType':'APPL','CFBundleShortVersionString':sys.argv[2],'CFBundleVersion':'2','LSMinimumSystemVersion':'14.0','LSUIElement':True,'NSHighResolutionCapable':True}
 with (Path(sys.argv[1])/'Contents/Info.plist').open('wb') as f: plistlib.dump(plist,f)
 PY
 codesign --force --sign - "$APP"

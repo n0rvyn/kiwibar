@@ -8,19 +8,12 @@ A server icon and monthly transfer percentage stay in your menu bar. Click for R
 
 Requires macOS 14+ and Xcode 26+ (Swift 6.2).
 
-Put your KiwiVM credentials in `.env` at the project root:
-
-```dotenv
-VEID=your_vps_id
-API_KEY=your_api_key
-```
-
 ```sh
 ./scripts/build-app.sh
 open dist/KiwiBar.app
 ```
 
-The local build points to your existing `.env`; credentials are never copied into the app.
+Settings opens on first launch. Enter your **VEID** and **API key**, then click **Save & Connect**. Use the gear button in the metrics panel to edit them later. The API key stays masked, and both values are stored in macOS Keychain.
 
 ## Homebrew
 
@@ -29,16 +22,10 @@ The source formula builds for your Mac and requires Xcode 26+:
 ```sh
 brew tap n0rvyn/kiwibar https://github.com/n0rvyn/kiwibar
 brew install n0rvyn/kiwibar/kiwibar
-mkdir -p ~/.config/kiwibar
-cp "$(brew --prefix kiwibar)/share/kiwibar/.env.example" ~/.config/kiwibar/.env
-chmod 600 ~/.config/kiwibar/.env
-```
-
-Fill in `VEID` and `API_KEY` in that file, then launch:
-
-```sh
 open "$(brew --prefix kiwibar)/KiwiBar.app"
 ```
+
+Enter your credentials in the app. No configuration file is needed or installed.
 
 ## Metric details
 
@@ -52,7 +39,7 @@ open "$(brew --prefix kiwibar)/KiwiBar.app"
 
 The client permits only `getLiveServiceInfo`, `getRawUsageStats` and `getRateLimitStatus` on `https://api.64clouds.com/v1/`. Credentials go in a form-encoded HTTPS POST body; redirects are refused. There are no server mutation controls. Provider API keys can carry broader permissions; the app's endpoint whitelist restricts its own calls.
 
-Responses stay in memory. The app does not save metrics, console images, IP addresses or credentials. `.env` files and local API notes are excluded from Git.
+Metrics stay in memory. Credentials are stored only in macOS Keychain; the app does not read or write plaintext credential files. Local development secrets and API notes remain excluded from Git.
 
 ## Development
 
@@ -65,10 +52,10 @@ swift test --disable-sandbox --cache-path .build/cache \
 
 `--disable-sandbox` disables SwiftPM's nested manifest sandbox for constrained build hosts; it does not change the app's network or operating-system permissions.
 
-Diagnostic mode makes the same read-only requests and prints status and response field names without credentials:
+Diagnostic mode makes the same read-only requests and prints connection status without credentials:
 
 ```sh
-.build/debug/KiwiBar --probe --env "$PWD/.env"
+.build/debug/KiwiBar --probe
 ```
 
 Sample-only chart rendering (no server request):

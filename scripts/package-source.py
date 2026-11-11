@@ -7,8 +7,8 @@ import io
 import tarfile
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = '1.0.0'
-PATHS = ['Package.swift', 'Sources', 'Tests', 'scripts', '.env.example', '.gitignore', 'README.md']
+VERSION = (ROOT / 'VERSION').read_text().strip()
+PATHS = ['Package.swift', 'Sources', 'Tests', 'scripts', 'VERSION', '.gitignore', 'README.md']
 files = []
 for item in PATHS:
     path = ROOT / item
@@ -55,20 +55,19 @@ formula = f'''class Kiwibar < Formula
     system "./scripts/build-app.sh", "--distribution"
     prefix.install "dist/KiwiBar.app"
     bin.install_symlink prefix/"KiwiBar.app/Contents/MacOS/KiwiBar" => "kiwibar"
-    pkgshare.install ".env.example"
   end
 
   def caveats
     <<~EOS
-      Put VEID and API_KEY in ~/.config/kiwibar/.env, then launch:
+      Launch KiwiBar and enter your VEID and API key in Settings:
         open "#{{opt_prefix}}/KiwiBar.app"
-      Example configuration: #{{pkgshare}}/.env.example
+      Credentials are saved in macOS Keychain.
     EOS
   end
 
   test do
     assert_match "KiwiBar", shell_output("#{{bin}}/kiwibar --help")
-    assert_equal "1.0.0", shell_output("#{{bin}}/kiwibar --version").strip
+    assert_equal "{VERSION}", shell_output("#{{bin}}/kiwibar --version").strip
   end
 end
 '''

@@ -1,14 +1,15 @@
 import Testing
 import Foundation
+import Security
 @testable import BandwagonCore
 
 @Test func credentialsAreData() throws {
-    let c = try Credentials(contents: "# comment\nexport VEID='123'\nAPI_KEY=\"a&b=+$(touch nope)\"\n")
+    let c = try Credentials(veid: " 123 ", apiKey: "test-a&b=+$(touch nope)")
     #expect(c.veid == "123")
-    #expect(c.apiKey == "a&b=+$(touch nope)")
-    #expect(APIClient.form(["api_key": c.apiKey]) == "api_key=a%26b%3D%2B%24%28touch%20nope%29")
-    #expect(throws: (any Error).self) { try Credentials(contents: "VEID=abc\nAPI_KEY=test") }
-    #expect(throws: (any Error).self) { try Credentials(contents: "VEID=123\nAPI_KEY=") }
+    #expect(c.apiKey == "test-a&b=+$(touch nope)")
+    #expect(APIClient.form(["api_key": c.apiKey]) == "api_key=test-a%26b%3D%2B%24%28touch%20nope%29")
+    #expect(throws: (any Error).self) { try Credentials(veid: "abc", apiKey: "test") }
+    #expect(throws: (any Error).self) { try Credentials(veid: "123", apiKey: " ") }
 }
 @Test func accountingAndUnavailableMetrics() throws {
     let data = Data(#"{"error":0,"data_counter":"100","plan_monthly_data":1000,"monthly_data_multiplier":"2","plan_ram":2048,"mem_available_kb":"1"}"#.utf8)
@@ -36,4 +37,24 @@ import Foundation
     #expect(rows[0].diskRead == nil)
     #expect(rows[1].networkIn == 100)
     #expect(Snapshot(["ve_status": .string("running")]).state == "Running")
+}
+
+@Test func keychainRoundTripAndReplacement() async throws {
+    let service = "com.norvyn.KiwiBar.tests.\(UUID().uuidString)"
+    defer {
+        SecItemDelete([kSecClass as String: kSecClassGenericPassword,
+                       kSecAttrService as String: service,
+                       kSecAttrAccount as String: "bandwagon-host"] as CFDictionary)
+    }
+    let store = KeychainCredentialStore(service: service)
+    #expect(try await store.load() == nil)
+    try await store.save(Credentials(veid: "123", apiKey: "test-key-one"))
+    let first = try #require(await store.load())
+    #expect(first.veid == "123")
+    #expect(first.apiKey == "test-key-one")
+    try await store.save(Credentials(veid: "456", apiKey: "test-key-two"))
+    let reopened = KeychainCredentialStore(service: service)
+    let second = try #require(await reopened.load())
+    #expect(second.veid == "456")
+    #expect(second.apiKey == "test-key-two")
 }

@@ -6,24 +6,32 @@ func bytes(_ value: Double?) -> String {
     return ByteCountFormatter.string(fromByteCount: Int64(value), countStyle: .binary)
 }
 struct Panel: View {
-    @ObservedObject var monitor: Monitor
+    @Bindable var monitor: Monitor
+    @State private var contentHeight: CGFloat = 180
+    private var availableContentHeight: CGFloat { max(180, (NSScreen.main?.visibleFrame.height ?? 800) - 160) }
+    private var panelWidth: CGFloat { min(440, (NSScreen.main?.visibleFrame.width ?? 800) - 32) }
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "server.rack").font(.title2).foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(monitor.snapshot?.text("hostname") ?? "Bandwagon Host").font(.headline).textSelection(.enabled)
-                    Text(monitor.snapshot?.text("node_location") ?? "KiwiBar").font(.caption).foregroundStyle(.secondary)
+                    Text(monitor.snapshot?.text("hostname") ?? "KiwiBar").font(.headline).textSelection(.enabled)
+                    Text(monitor.snapshot?.text("node_location") ?? "Bandwagon Host").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                let state = monitor.snapshot?.state ?? (monitor.error == nil ? "Connecting" : "Unavailable")
+                SettingsLink { Image(systemName: "gearshape") }
+                    .buttonStyle(.plain).help("Settings").accessibilityLabel("Settings")
+                let state = monitor.snapshot?.state ?? (!monitor.configured && !monitor.initializing ? "Not connected" : (monitor.error == nil ? "Connecting" : "Unavailable"))
                 Label(state, systemImage: state == "Running" ? "checkmark.circle.fill" : "exclamationmark.circle")
                     .font(.caption).foregroundStyle(state == "Running" ? Color.green : Color.secondary)
             }.padding(16)
             Divider()
             ScrollView {
                 content.padding(16)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
             }
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(height: min(contentHeight, availableContentHeight))
             Divider()
             HStack {
                 if let date = monitor.updated {
@@ -31,17 +39,17 @@ struct Panel: View {
                 } else { Text("No metrics loaded").font(.caption).foregroundStyle(.secondary) }
                 Spacer()
                 if monitor.loading { ProgressView().controlSize(.small) }
-                Button { Task { await monitor.refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh now · auto refresh every 5 minutes").disabled(monitor.loading).accessibilityLabel("Refresh now")
+                Button { Task { await monitor.refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh now · auto refresh every 5 minutes").disabled(monitor.loading || !monitor.configured).accessibilityLabel("Refresh now")
                 Button("Quit") { NSApplication.shared.terminate(nil) }
             }.padding(12).help("Auto refresh every 5 minutes. API points: \(monitor.limits?["remaining_points_15min"]?.number.map { String(format: "%.0f", $0) } ?? "—") / 15 min; \(monitor.limits?["remaining_points_24h"]?.number.map { String(format: "%.0f", $0) } ?? "—") / 24 h")
-        }.frame(width: 440, height: 710).background(.background)
+        }.frame(width: panelWidth).background(.background)
     }
     // Shared content allows offscreen vector rendering without AppKit-backed ScrollView.
     var content: some View {
         VStack(alignment: .leading, spacing: 18) {
             if let error = monitor.error {
                 Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
-                if monitor.snapshot == nil { Text("Check connection and .env, then refresh.").font(.caption).foregroundStyle(.secondary) }
+                if monitor.snapshot == nil { Text("Check your connection, or update your credentials in Settings.").font(.caption).foregroundStyle(.secondary) }
             }
             if let s = monitor.snapshot {
                 VStack(alignment: .leading, spacing: 8) {
@@ -89,7 +97,13 @@ struct Panel: View {
                     Text(s.addresses.joined(separator: " · ")).textSelection(.enabled)
                     Text([s.text("plan"), s.text("os")].compactMap { $0 }.joined(separator: " · ")).foregroundStyle(.secondary)
                 }.font(.caption)
-            } else if monitor.loading { HStack { Spacer(); ProgressView("Loading metrics…"); Spacer() }.padding(.vertical, 40) }
+            } else if !monitor.configured && !monitor.initializing {
+                VStack(spacing: 12) {
+                    Image(systemName: "server.rack").font(.largeTitle).foregroundStyle(.secondary)
+                    Text("Connect your host").font(.headline)
+                    SettingsLink { Text("Open Settings") }.buttonStyle(.borderedProminent)
+                }.frame(maxWidth: .infinity).padding(.vertical, 40)
+            } else if monitor.loading || monitor.initializing { HStack { Spacer(); ProgressView("Loading metrics…"); Spacer() }.padding(.vertical, 40) }
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
     func throttle(_ name: String, _ value: Double?) -> some View {
