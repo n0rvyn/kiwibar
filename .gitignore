@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.build/
+dist/
+.DS_Store
+.swiftpm/
+/bwh_api_examples.md
+/docs/06-plans/
+/docs/private/
