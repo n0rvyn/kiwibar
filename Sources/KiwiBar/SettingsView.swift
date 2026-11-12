@@ -1,4 +1,5 @@
 import SwiftUI
+import ServiceManagement
 import BandwagonCore
 
 private enum ConnectionLayout {
@@ -13,6 +14,10 @@ struct SettingsView: View {
     @Bindable var monitor: Monitor
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focus: Field?
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var loginStatus = SMAppService.mainApp.status
+    @State private var loginError: String?
+    @State private var changingLogin = false
     @State private var veid = ""
     @State private var apiKey = ""
     @State private var saving = false
@@ -71,6 +76,23 @@ struct SettingsView: View {
                     Text("VEID contains numbers only.").font(.caption).foregroundStyle(.orange)
                 }
             }
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("Launch at Login", isOn: Binding(
+                    get: { loginStatus == .enabled || loginStatus == .requiresApproval },
+                    set: { enabled in Task { await setLaunchAtLogin(enabled) } }
+                ))
+                .toggleStyle(.switch)
+                .disabled(changingLogin)
+                .accessibilityIdentifier("launch-at-login")
+                if loginStatus == .requiresApproval {
+                    Button("Open Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
+                }
+                if let loginError {
+                    Label(loginError, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
                     .font(.callout).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
@@ -94,12 +116,27 @@ struct SettingsView: View {
         }
         .padding(ConnectionLayout.inset).frame(width: ConnectionLayout.width)
         .background(Color(nsColor: .windowBackgroundColor)).tint(.teal)
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { loginStatus = SMAppService.mainApp.status }
+        }
         .task {
+            loginStatus = SMAppService.mainApp.status
             do {
                 if let saved = try await monitor.savedCredentials() { veid = saved.veid; apiKey = saved.apiKey }
             } catch { self.error = error.localizedDescription }
             loading = false
             if veid.isEmpty { focus = .veid }
+        }
+    }
+    private func setLaunchAtLogin(_ enabled: Bool) async {
+        changingLogin = true
+        loginError = nil
+        defer { changingLogin = false; loginStatus = SMAppService.mainApp.status }
+        do {
+            if enabled { try SMAppService.mainApp.register() }
+            else { try await SMAppService.mainApp.unregister() }
+        } catch {
+            loginError = "Could not change Launch at Login: \(error.localizedDescription)"
         }
     }
     private func save() async {

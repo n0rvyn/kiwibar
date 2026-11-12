@@ -41,36 +41,4 @@ with out.open('wb') as output, gzip.GzipFile(filename='', mode='wb', fileobj=out
             archive.addfile(info, io.BytesIO(data))
 checksum = hashlib.sha256(out.read_bytes()).hexdigest()
 print(f'{checksum}  {out.name}')
-formula = f'''class Kiwibar < Formula
-  desc "Native macOS menu bar monitor for Bandwagon Host"
-  homepage "https://github.com/n0rvyn/kiwibar"
-  url "https://github.com/n0rvyn/kiwibar/releases/download/v{VERSION}/KiwiBar-{VERSION}-source.tar.gz"
-  sha256 "{checksum}"
-  version "{VERSION}"
-
-  depends_on xcode: ["26.0", :build]
-  depends_on macos: :sonoma
-
-  def install
-    system "./scripts/build-app.sh", "--distribution"
-    prefix.install "dist/KiwiBar.app"
-    bin.install_symlink prefix/"KiwiBar.app/Contents/MacOS/KiwiBar" => "kiwibar"
-  end
-
-  def caveats
-    <<~EOS
-      Launch KiwiBar and enter your VEID and API key in Settings:
-        open "#{{opt_prefix}}/KiwiBar.app"
-      Credentials are saved in macOS Keychain.
-    EOS
-  end
-
-  test do
-    assert_match "KiwiBar", shell_output("#{{bin}}/kiwibar --help")
-    assert_equal "{VERSION}", shell_output("#{{bin}}/kiwibar --version").strip
-  end
-end
-'''
-(ROOT / 'Formula').mkdir(exist_ok=True)
-(ROOT / 'Formula' / 'kiwibar.rb').write_text(formula)
 print(f'Packaged {len(files)} public source files; private .env and local notes excluded.')
