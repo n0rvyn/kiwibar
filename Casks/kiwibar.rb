@@ -4,7 +4,7 @@ cask "kiwibar" do
 
   url "https://github.com/n0rvyn/kiwibar/releases/download/v#{version}/KiwiBar-#{version}.zip"
   name "KiwiBar"
-  desc "Native macOS menu bar monitor for Bandwagon Host"
+  desc "Menu bar monitor for Bandwagon Host"
   homepage "https://github.com/n0rvyn/kiwibar"
 
   depends_on macos: :sonoma
