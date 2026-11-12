@@ -35,7 +35,7 @@ cask "kiwibar" do
   version "$VERSION"
   sha256 "$SHA256"
 
-  url "https://github.com/n0rvyn/kiwibar/releases/download/v#{version}/KiwiBar-#{version}.zip"
+  url "https://github.com/n0rvyn/kiwibar/releases/download/v#{version}/KiwiBar-#{version}.zip?download=1"
   name "KiwiBar"
   desc "Menu bar monitor for Bandwagon Host"
   homepage "https://github.com/n0rvyn/kiwibar"
