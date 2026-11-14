@@ -46,7 +46,8 @@ struct Panel: View {
     }
     // Shared content allows offscreen vector rendering without AppKit-backed ScrollView.
     var content: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        let samples = UsageSample.recentWeek(monitor.samples)
+        return VStack(alignment: .leading, spacing: 18) {
             if let error = monitor.error {
                 Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
                 if monitor.snapshot == nil { Text("Check your connection, or update your credentials in Settings.").font(.caption).foregroundStyle(.secondary) }
@@ -80,14 +81,14 @@ struct Panel: View {
                 }.font(.caption)
                 VStack(alignment: .leading, spacing: 14) {
                     if let e = monitor.historyError { Label(e, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange) }
-                    if monitor.samples.isEmpty {
+                    if samples.isEmpty {
                         HStack { Image(systemName: "chart.xyaxis.line"); Text(monitor.loading ? "Loading history…" : "History unavailable") }.font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.vertical, 24)
                     } else {
-                        SparkChart(title: "CPU", samples: monitor.samples, series: [ChartSeries(name: "Usage", color: .orange, value: \.cpu)], byteValues: false)
+                        SparkChart(title: "CPU", samples: samples, series: [ChartSeries(name: "Usage", color: .orange, value: \.cpu)], byteValues: false)
                             .help("cpu_usage as reported by Bandwagon; provider units, not CPU percent")
-                        SparkChart(title: "Network", samples: monitor.samples, series: [ChartSeries(name: "↓ In", color: .blue, value: \.networkIn), ChartSeries(name: "↑ Out", color: .purple, value: \.networkOut)], byteValues: true)
-                        SparkChart(title: "Disk I/O", samples: monitor.samples, series: [ChartSeries(name: "Read", color: .teal, value: \.diskRead), ChartSeries(name: "Write", color: .orange, value: \.diskWrite)], byteValues: true)
-                        if let start = monitor.samples.first?.date, let end = monitor.samples.last?.date {
+                        SparkChart(title: "Network", samples: samples, series: [ChartSeries(name: "↓ In", color: .blue, value: \.networkIn), ChartSeries(name: "↑ Out", color: .purple, value: \.networkOut)], byteValues: true)
+                        SparkChart(title: "Disk I/O", samples: samples, series: [ChartSeries(name: "Read", color: .teal, value: \.diskRead), ChartSeries(name: "Write", color: .orange, value: \.diskWrite)], byteValues: true)
+                        if let start = samples.first?.date, let end = samples.last?.date {
                             HStack { Text(start.formatted(date: .abbreviated, time: .omitted)); Spacer(); Text(end.formatted(date: .abbreviated, time: .omitted)) }.font(.caption2).foregroundStyle(.tertiary)
                         }
                     }

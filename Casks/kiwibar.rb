@@ -1,6 +1,6 @@
 cask "kiwibar" do
-  version "1.2.0"
-  sha256 "010b89449cb4a0291a9089b18d8f32b9fab5b783d81be8c0f84c59ac1d2fecde"
+  version "1.2.1"
+  sha256 "0b29dc26bb787fdcc2378e4114da3b35d67167f1bd2c7b83135a125aec38ed03"
 
   url "https://github.com/n0rvyn/kiwibar/releases/download/v#{version}/KiwiBar-#{version}.zip?download=1"
   name "KiwiBar"

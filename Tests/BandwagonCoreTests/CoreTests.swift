@@ -39,6 +39,24 @@ import Security
     #expect(Snapshot(["ve_status": .string("running")]).state == "Running")
 }
 
+@Test func historyShowsOnlyTheRollingWeek() throws {
+    let now = Date(timeIntervalSince1970: 2_000_000)
+    let cutoff = now.timeIntervalSince1970 - 7 * 24 * 60 * 60
+    let payload: Payload = ["data": .array([
+        .object(["timestamp": .number(cutoff - 1), "cpu_usage": .number(999)]),
+        .object(["timestamp": .number(cutoff), "cpu_usage": .number(10)]),
+        .object(["timestamp": .number(now.timeIntervalSince1970), "cpu_usage": .number(20)]),
+        .object(["timestamp": .number(now.timeIntervalSince1970 + 1), "cpu_usage": .number(888)])
+    ])]
+    let all = UsageSample.parse(payload)
+    let visible = UsageSample.recentWeek(all, now: now)
+    #expect(visible.map(\.cpu) == [10, 20])
+    #expect(visible.first?.date == now.addingTimeInterval(-604_800))
+    #expect(UsageSample.recentWeek(all, now: now.addingTimeInterval(604_802)).isEmpty)
+    #expect(UsageSample.recentWeek([], now: now).isEmpty)
+    #expect(all.count == 4)
+}
+
 @Test func keychainRoundTripAndReplacement() async throws {
     let service = "com.norvyn.KiwiBar.tests.\(UUID().uuidString)"
     defer {

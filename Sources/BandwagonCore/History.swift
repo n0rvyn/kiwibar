@@ -19,4 +19,8 @@ public struct UsageSample: Sendable {
         let records = payload["data"]?.array ?? payload["stats"]?.array ?? []
         return records.compactMap { $0.object.flatMap(UsageSample.init) }.sorted { $0.date < $1.date }
     }
+    public static func recentWeek(_ samples: [UsageSample], now: Date = Date()) -> [UsageSample] {
+        let start = now.addingTimeInterval(-7 * 24 * 60 * 60)
+        return samples.filter { $0.date >= start && $0.date <= now }
+    }
 }

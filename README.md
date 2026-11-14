@@ -51,6 +51,7 @@ open dist/KiwiBar.app
 
 - Transfer usage and allowance apply the provider's `monthly_data_multiplier`.
 - RAM usage is plan RAM minus available memory. Mapped disk is allocated image space, not guest filesystem usage.
+- CPU, network and disk history charts show only the last seven days.
 - CPU history uses the provider's reported `cpu_usage` values; it does not claim CPU percentage. Network and disk history show byte quantities for each provider sample, not inferred transfer rates. Sample intervals vary across the provider's historical retention tiers.
 - Missing metrics display `—` or an unavailable indicator. Hover over throttle icons for their state.
 - On a connection error, the last successful values remain visible and are marked stale.

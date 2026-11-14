@@ -1,5 +1,10 @@
 # Release notes
 
+## 1.2.1
+
+- Show only the last seven days in CPU, network and disk I/O charts, with scales based on that same period so recent activity stays visible.
+- Keep the five-minute refresh interval and existing metric formats.
+
 ## 1.2.0
 
 - Install KiwiBar as a prebuilt universal Homebrew Cask. No Xcode is required; the app lives in a real `/Applications/KiwiBar.app` directory.
